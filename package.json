@@ -1,0 +1,11 @@
+{
+  "name": "dlh-nexus",
+  "version": "1.0.0",
+  "description": "DLH NEXUS - Advanced AI Model and Bot",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build step required'"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="DLH NEXUS - Advanced AI Model & Bot">
+    <title>DLH NEXUS</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23000'/><text x='50' y='70' font-size='60' font-weight='bold' text-anchor='middle' fill='%23fff' font-family='sans-serif'>N</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Boot Screen -->
+    <div id="bootScreen" class="boot-screen">
+        <div class="boot-content">
+            <svg class="boot-logo" viewBox="0 0 200 200" width="120" height="120">
+                <defs>
+                    <linearGradient id="bootGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#fff;stop-opacity:1"/>
+                        <stop offset="100%" style="stop-color:#999;stop-opacity:1"/>
+                    </linearGradient>
+                </defs>
+                <rect width="200" height="200" rx="44" fill="#000" stroke="#333" stroke-width="2"/>
+                <path d="M 50 60 L 50 140 L 70 140 L 70 100 L 110 140 L 140 140 L 140 60 L 120 60 L 120 100 L 80 60 Z" fill="url(#bootGrad)"/>
+                <circle cx="100" cy="100" r="90" fill="none" stroke="#222" stroke-width="1" class="boot-ring"/>
+                <circle cx="100" cy="100" r="80" fill="none" stroke="#333" stroke-width="0.5" class="boot-ring-2"/>
+            </svg>
+            <div class="boot-text">DLH NEXUS</div>
+            <div class="boot-subtext">Initializing Neural Engine</div>
+            <div class="boot-progress"><div class="boot-progress-bar"></div></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-wrapper">
+                    <svg class="logo-icon" viewBox="0 0 200 200" width="36" height="36">
+                        <rect width="200" height="200" rx="44" fill="#000" stroke="#333" stroke-width="2"/>
+                        <path d="M 50 60 L 50 140 L 70 140 L 70 100 L 110 140 L 140 140 L 140 60 L 120 60 L 120 100 L 80 60 Z" fill="#fff"/>
+                    </svg>
+                    <span class="logo-text">DLH NEXUS</span>
+                </div>
+                <button class="icon-btn sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+            </div>
+
+            <button class="new-chat-btn" id="newChatBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                New Chat
+            </button>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>Chat</span>
+                </button>
+                <button class="nav-item" data-view="image">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                    <span>Image Gen</span>
+                </button>
+                <button class="nav-item" data-view="vision">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Vision</span>
+                </button>
+                <button class="nav-item" data-view="voice">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                    <span>Voice</span>
+                </button>
+                <button class="nav-item" data-view="tools">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    <span>Connectors</span>
+                </button>
+                <button class="nav-item" data-view="device">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <span>Device</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="model-badge">
+                    <div class="model-badge-dot"></div>
+                    <span>DLH NEXUS MODEL</span>
+                </div>
+                <div class="status-info">
+                    <div class="status-row"><span class="status-label">Engine</span><span class="status-value">Active</span></div>
+                    <div class="status-row"><span class="status-label">Models</span><span class="status-value">3 Fusion</span></div>
+                    <div class="status-row"><span class="status-label">Context</span><span class="status-value">1.5M</span></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <div class="topbar-title">
+                    <h1 id="viewTitle">DLH NEXUS</h1>
+                    <span class="topbar-subtitle" id="viewSubtitle">Advanced AI Assistant</span>
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-btn" id="themeBtn" aria-label="Theme" title="Toggle theme">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                    <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat View -->
+            <section class="view active" id="view-chat">
+                <div class="chat-container">
+                    <div class="messages" id="messages">
+                        <div class="welcome-screen" id="welcomeScreen">
+                            <div class="welcome-logo">
+                                <svg viewBox="0 0 200 200" width="80" height="80">
+                                    <defs>
+                                        <linearGradient id="welcomeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#fff;stop-opacity:1"/>
+                                            <stop offset="100%" style="stop-color:#777;stop-opacity:1"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <rect width="200" height="200" rx="44" fill="#000" stroke="#222" stroke-width="2"/>
+                                    <path d="M 50 60 L 50 140 L 70 140 L 70 100 L 110 140 L 140 140 L 140 60 L 120 60 L 120 100 L 80 60 Z" fill="url(#welcomeGrad)"/>
+                                </svg>
+                            </div>
+                            <h2 class="welcome-title">DLH NEXUS</h2>
+                            <p class="welcome-desc">The most advanced AI model, powered by triple-fusion neural architecture</p>
+                            <div class="suggestion-grid">
+                                <button class="suggestion-card" data-prompt="Explain quantum entanglement in simple terms">
+                                    <div class="suggestion-icon">⚡</div>
+                                    <div class="suggestion-text">Explain quantum entanglement</div>
+                                </button>
+                                <button class="suggestion-card" data-prompt="Write a Python function for a thread-safe LRU cache">
+                                    <div class="suggestion-icon">💻</div>
+                                    <div class="suggestion-text">Write a thread-safe LRU cache</div>
+                                </button>
+                                <button class="suggestion-card" data-prompt="Design a modern logo for a space technology company">
+                                    <div class="suggestion-icon">🚀</div>
+                                    <div class="suggestion-text">Design a space tech logo</div>
+                                </button>
+                                <button class="suggestion-card" data-prompt="What are the latest breakthroughs in fusion energy?">
+                                    <div class="suggestion-icon">🔬</div>
+                                    <div class="suggestion-text">Latest fusion energy breakthroughs</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="input-area">
+                        <div class="input-wrapper">
+                            <div class="input-tools">
+                                <button class="tool-btn" id="attachBtn" title="Attach image" aria-label="Attach">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                </button>
+                                <input type="file" id="imageInput" accept="image/*" class="hidden-file-input">
+                                <button class="tool-btn" id="webSearchBtn" title="Web search" aria-label="Web search">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                                </button>
+                                <button class="tool-btn" id="voiceInputBtn" title="Voice input" aria-label="Voice input">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+                                </button>
+                            </div>
+                            <textarea id="messageInput" class="message-input" placeholder="Ask DLH NEXUS anything..." rows="1"></textarea>
+                            <button class="send-btn" id="sendBtn" disabled aria-label="Send">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            </button>
+                        </div>
+                        <div class="input-footer">
+                            <span class="input-hint">DLH NEXUS may produce inaccurate information. Press Enter to send, Shift+Enter for new line.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Image Generation View -->
+            <section class="view" id="view-image">
+                <div class="tool-view">
+                    <div class="tool-header">
+                        <h2>Image Generation</h2>
+                        <p>Generate stunning images from text descriptions</p>
+                    </div>
+                    <div class="image-gen-container">
+                        <div class="image-gen-input">
+                            <textarea id="imagePrompt" class="tool-textarea" placeholder="Describe the image you want to generate..." rows="3"></textarea>
+                            <div class="image-gen-options">
+                                <select id="imageModel" class="tool-select">
+                                    <option value="openai/gpt-image-2.5-flare">GPT Image 2.5 Flare</option>
+                                    <option value="openai/gpt-image-2.5-sunburst">GPT Image 2.5 Sunburst</option>
+                                    <option value="x-ai/grok-imagine-image">Grok Imagine</option>
+                                    <option value="x-ai/grok-imagine-image-2.0">Grok Imagine 2.0</option>
+                                    <option value="openai/dall-e-3">DALL-E 3</option>
+                                </select>
+                                <button class="action-btn" id="generateImageBtn">Generate</button>
+                            </div>
+                        </div>
+                        <div class="image-gallery" id="imageGallery"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Vision View -->
+            <section class="view" id="view-vision">
+                <div class="tool-view">
+                    <div class="tool-header">
+                        <h2>Vision Analysis</h2>
+                        <p>Upload an image and ask questions about it</p>
+                    </div>
+                    <div class="vision-container">
+                        <div class="vision-upload" id="visionUpload">
+                            <div class="upload-zone" id="uploadZone">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                <p>Drop an image here or click to upload</p>
+                                <span class="upload-hint">PNG, JPG, WEBP supported</span>
+                            </div>
+                            <input type="file" id="visionFileInput" accept="image/*" class="hidden-file-input">
+                        </div>
+                        <div class="vision-preview hidden" id="visionPreview">
+                            <img id="visionImage" src="" alt="Preview">
+                            <button class="action-btn danger" id="removeImageBtn">Remove</button>
+                        </div>
+                        <div class="vision-input">
+                            <textarea id="visionPrompt" class="tool-textarea" placeholder="What do you want to know about this image?" rows="2"></textarea>
+                            <button class="action-btn" id="analyzeImageBtn">Analyze</button>
+                        </div>
+                        <div class="vision-results" id="visionResults"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Voice View -->
+            <section class="view" id="view-voice">
+                <div class="tool-view">
+                    <div class="tool-header">
+                        <h2>Voice & Speech</h2>
+                        <p>Convert text to speech and speech to text</p>
+                    </div>
+                    <div class="voice-container">
+                        <div class="voice-section">
+                            <h3>Text to Speech</h3>
+                            <textarea id="ttsText" class="tool-textarea" placeholder="Enter text to convert to speech..." rows="4"></textarea>
+                            <div class="voice-options">
+                                <select id="ttsEngine" class="tool-select"></select>
+                                <select id="ttsVoice" class="tool-select"></select>
+                            </div>
+                            <button class="action-btn" id="speakBtn">Speak</button>
+                            <audio id="audioPlayer" controls class="audio-player hidden"></audio>
+                        </div>
+                        <div class="voice-section">
+                            <h3>Speech to Text</h3>
+                            <div class="stt-controls">
+                                <button class="action-btn record-btn" id="recordBtn">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+                                    <span>Start Recording</span>
+                                </button>
+                            </div>
+                            <div class="stt-result" id="sttResult"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Connectors View -->
+            <section class="view" id="view-tools">
+                <div class="tool-view">
+                    <div class="tool-header">
+                        <h2>Connectors</h2>
+                        <p>Tools and integrations for extended capabilities</p>
+                    </div>
+                    <div class="connectors-grid" id="connectorsGrid"></div>
+                </div>
+            </section>
+
+            <!-- Device Control View -->
+            <section class="view" id="view-device">
+                <div class="tool-view">
+                    <div class="tool-header">
+                        <h2>Device Control</h2>
+                        <p>Access and control device hardware</p>
+                    </div>
+                    <div class="device-grid" id="deviceGrid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay hidden" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="icon-btn" id="closeSettings" aria-label="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <label class="setting-label">Temperature</label>
+                    <input type="range" id="tempSlider" min="0" max="2" step="0.1" value="0.7" class="slider">
+                    <span class="setting-value" id="tempValue">0.7</span>
+                </div>
+                <div class="settings-group">
+                    <label class="setting-label">Reasoning Effort</label>
+                    <select id="reasoningEffort" class="tool-select">
+                        <option value="none">None</option>
+                        <option value="minimal">Minimal</option>
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="xhigh">Extra High</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label class="setting-label">Max Output Tokens</label>
+                    <input type="number" id="maxTokens" value="4096" min="256" max="128000" step="256" class="tool-input">
+                </div>
+                <div class="settings-group">
+                    <label class="setting-label">Streaming</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="streamToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-group">
+                    <label class="setting-label">Fusion Mode</label>
+                    <select id="fusionMode" class="tool-select">
+                        <option value="synthesis">Synthesis (Combined)</option>
+                        <option value="vote">Vote (Best Answer)</option>
+                        <option value="cascade">Cascade (Sequential)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js"></script>
+    <script src="js/nexus-model.js"></script>
+    <script src="js/tools.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "dlh-nexus",
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
