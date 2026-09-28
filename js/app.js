@@ -12,16 +12,31 @@
     let webSearchEnabled = false;
 
     // ===== Boot Sequence =====
-    function bootSequence() {
+    async function bootSequence() {
+        // Wait for puter.js to be available
+        const puterReady = await NexusModel.waitForPuter(20000);
+        
+        // Also wait a minimum time for UI animation
+        await new Promise(r => setTimeout(r, 1500));
+        
+        const bootScreen = document.getElementById('bootScreen');
+        const bootSubtext = document.querySelector('.boot-subtext');
+        
+        if (puterReady) {
+            if (bootSubtext) bootSubtext.textContent = 'Neural Engine Ready';
+        } else {
+            if (bootSubtext) bootSubtext.textContent = 'Running in limited mode';
+        }
+        
+        await new Promise(r => setTimeout(r, 500));
+        
+        bootScreen.classList.add('fade-out');
+        document.getElementById('app').classList.remove('hidden');
+        
         setTimeout(() => {
-            const bootScreen = document.getElementById('bootScreen');
-            bootScreen.classList.add('fade-out');
-            document.getElementById('app').classList.remove('hidden');
-            setTimeout(() => {
-                bootScreen.style.display = 'none';
-                initApp();
-            }, 500);
-        }, 2500);
+            bootScreen.style.display = 'none';
+            initApp();
+        }, 500);
     }
 
     // ===== Initialize App =====
@@ -32,7 +47,12 @@
         renderConnectors();
         renderDevices();
         loadVoiceOptions();
-        NexusUI.toast('DLH NEXUS is ready', 'success');
+        
+        if (NexusModel.isPuterAvailable()) {
+            NexusUI.toast('DLH NEXUS is ready', 'success');
+        } else {
+            NexusUI.toast('AI engine loading - features will activate shortly', 'warning', 5000);
+        }
     }
 
     // ===== Event Listeners =====

@@ -22,12 +22,40 @@ const NexusModel = {
         reasoningEffort: 'medium',
         maxTokens: 4096,
         stream: true,
-        fusionMode: 'synthesis' // synthesis | vote | cascade
+        fusionMode: 'synthesis'
     },
 
     // Conversation state
     conversations: new Map(),
     currentConversationId: null,
+    _puterReady: false,
+
+    // ===== Wait for Puter.js to be available =====
+    async waitForPuter(maxWaitMs = 15000) {
+        // Check if already ready
+        if (this._puterReady && typeof puter !== 'undefined' && puter.ai) {
+            return true;
+        }
+
+        const start = Date.now();
+        while (Date.now() - start < maxWaitMs) {
+            if (typeof puter !== 'undefined' && puter.ai && typeof puter.ai.chat === 'function') {
+                this._puterReady = true;
+                return true;
+            }
+            // Wait 100ms before checking again
+            await new Promise(r => setTimeout(r, 100));
+        }
+
+        // Puter not available after waiting
+        console.error('Puter.js SDK not available after waiting');
+        return false;
+    },
+
+    // Check if puter is available
+    isPuterAvailable() {
+        return typeof puter !== 'undefined' && puter.ai && typeof puter.ai.chat === 'function';
+    },
 
     // Initialize a new conversation
     createConversation() {
@@ -77,6 +105,13 @@ const NexusModel = {
     // Main chat function - orchestrates all three models
     async chat(prompt, options = {}) {
         const opts = { ...this.config, ...options };
+
+        // Wait for puter to be available
+        const puterReady = await this.waitForPuter();
+        if (!puterReady) {
+            throw new Error('AI engine is not available. Please refresh the page and try again.');
+        }
+
         const history = this.getHistory();
         
         // Add user message
@@ -113,6 +148,7 @@ const NexusModel = {
                 statuses[key] = 'done';
                 return { key, modelId, response };
             } catch (err) {
+                console.warn(`Model ${key} (${modelId}) error:`, err);
                 statuses[key] = 'error';
                 results[key] = { error: err.message, content: '' };
                 return { key, modelId, error: err.message };
@@ -123,23 +159,43 @@ const NexusModel = {
         if (opts.fusionMode === 'synthesis') {
             await Promise.all(modelPromises);
             
+            // Check if at least one model succeeded
+            const anySuccess = Object.values(results).some(r => r.content && !r.error);
+            if (!anySuccess) {
+                throw new Error('All models failed to respond. Please try again.');
+            }
+
             // Synthesize responses
             const synthesisPrompt = this.buildSynthesisPrompt(results);
-            messages.push({
-                role: 'user',
-                content: synthesisPrompt
-            });
+            const synthesisMessages = [
+                ...messages,
+                { role: 'user', content: synthesisPrompt }
+            ];
 
             // Use primary model for synthesis with streaming
-            const stream = await this.callModel(this.MODELS.primary, messages, { ...opts, stream: true });
-            return { stream, statuses, results, mode: 'synthesis' };
+            try {
+                const stream = await this.callModel(this.MODELS.primary, synthesisMessages, { ...opts, stream: true });
+                return { stream, statuses, results, mode: 'synthesis' };
+            } catch (e) {
+                // Fallback: use the best available result
+                const best = this.selectBestResponse(results);
+                if (results[best] && results[best].content) {
+                    return {
+                        stream: this.simulateStream(results[best].content),
+                        statuses, results, mode: 'synthesis'
+                    };
+                }
+                throw e;
+            }
         }
         
         // Vote mode - pick best response
         if (opts.fusionMode === 'vote') {
             await Promise.all(modelPromises);
             const best = this.selectBestResponse(results);
-            // Stream the best response word by word
+            if (!results[best] || !results[best].content) {
+                throw new Error('All models failed to respond. Please try again.');
+            }
             return { 
                 stream: this.simulateStream(results[best].content), 
                 statuses, 
@@ -152,18 +208,38 @@ const NexusModel = {
         // Cascade mode - primary first, then enhance
         if (opts.fusionMode === 'cascade') {
             // Start with primary model streaming
-            const primaryStream = await this.callModel(this.MODELS.primary, messages, { ...opts, stream: true });
-            // Fire secondary and tertiary in background for enhancement
-            modelPromises.forEach(p => p.catch(() => {}));
-            return { stream: primaryStream, statuses, results, mode: 'cascade' };
+            try {
+                const primaryStream = await this.callModel(this.MODELS.primary, messages, { ...opts, stream: true });
+                return { stream: primaryStream, statuses, results, mode: 'cascade' };
+            } catch (e) {
+                // Fallback to secondary
+                statuses.primary = 'error';
+                try {
+                    const secondaryStream = await this.callModel(this.MODELS.secondary, messages, { ...opts, stream: true });
+                    return { stream: secondaryStream, statuses, results, mode: 'cascade' };
+                } catch (e2) {
+                    // Fallback to tertiary
+                    statuses.secondary = 'error';
+                    const tertiaryStream = await this.callModel(this.MODELS.tertiary, messages, { ...opts, stream: true });
+                    return { stream: tertiaryStream, statuses, results, mode: 'cascade' };
+                }
+            }
         }
 
         // Default: synthesis
         await Promise.all(modelPromises);
         const synthesisPrompt = this.buildSynthesisPrompt(results);
-        messages.push({ role: 'user', content: synthesisPrompt });
-        const stream = await this.callModel(this.MODELS.primary, messages, { ...opts, stream: true });
-        return { stream, statuses, results, mode: 'synthesis' };
+        const synthesisMessages = [...messages, { role: 'user', content: synthesisPrompt }];
+        try {
+            const stream = await this.callModel(this.MODELS.primary, synthesisMessages, { ...opts, stream: true });
+            return { stream, statuses, results, mode: 'synthesis' };
+        } catch (e) {
+            const best = this.selectBestResponse(results);
+            if (results[best] && results[best].content) {
+                return { stream: this.simulateStream(results[best].content), statuses, results, mode: 'synthesis' };
+            }
+            throw e;
+        }
     },
 
     // Non-streaming fusion
@@ -185,11 +261,21 @@ const NexusModel = {
 
         await Promise.all(promises);
 
+        const anySuccess = Object.values(results).some(r => r.content && !r.error);
+        if (!anySuccess) {
+            throw new Error('All models failed to respond. Please try again.');
+        }
+
         if (opts.fusionMode === 'synthesis') {
             const synthesisPrompt = this.buildSynthesisPrompt(results);
             const finalMessages = [...messages, { role: 'user', content: synthesisPrompt }];
-            const final = await this.callModel(this.MODELS.primary, finalMessages, opts);
-            return { content: final.content, statuses, results, mode: 'synthesis' };
+            try {
+                const final = await this.callModel(this.MODELS.primary, finalMessages, opts);
+                return { content: final.content, statuses, results, mode: 'synthesis' };
+            } catch (e) {
+                const best = this.selectBestResponse(results);
+                return { content: results[best].content, statuses, results, mode: 'synthesis' };
+            }
         }
 
         if (opts.fusionMode === 'vote') {
@@ -203,6 +289,13 @@ const NexusModel = {
 
     // Call a single model
     async callModel(modelId, messages, opts) {
+        if (!this.isPuterAvailable()) {
+            const ready = await this.waitForPuter();
+            if (!ready) {
+                throw new Error('AI engine not available');
+            }
+        }
+
         const options = {
             model: modelId,
             stream: opts.stream || false
@@ -215,26 +308,55 @@ const NexusModel = {
         }
         if (opts.tools) options.tools = opts.tools;
 
-        const response = await puter.ai.chat(messages, options);
+        // Call puter.ai.chat
+        let response;
+        try {
+            // Handle different message formats
+            if (typeof messages === 'string') {
+                response = await puter.ai.chat(messages, options);
+            } else if (Array.isArray(messages)) {
+                // If it's an array of messages, pass as first arg
+                response = await puter.ai.chat(messages, options);
+            } else {
+                response = await puter.ai.chat(messages, options);
+            }
+        } catch (e) {
+            console.error(`puter.ai.chat error for ${modelId}:`, e);
+            throw new Error(`Model ${modelId} error: ${e.message || e}`);
+        }
 
         if (opts.stream) {
             return response; // Return async iterable
         }
 
-        // Extract text content
+        // Extract text content from response
         let content = '';
         if (typeof response === 'string') {
             content = response;
-        } else if (response?.message?.content) {
-            content = typeof response.message.content === 'string' 
-                ? response.message.content 
-                : (Array.isArray(response.message.content) 
-                    ? response.message.content.filter(b => b.type === 'text').map(b => b.text).join('')
-                    : JSON.stringify(response.message.content));
-        } else if (response?.text) {
+        } else if (response && response.message && response.message.content) {
+            if (typeof response.message.content === 'string') {
+                content = response.message.content;
+            } else if (Array.isArray(response.message.content)) {
+                content = response.message.content
+                    .filter(b => b.type === 'text' || typeof b === 'string')
+                    .map(b => typeof b === 'string' ? b : (b.text || ''))
+                    .join('');
+            } else {
+                content = JSON.stringify(response.message.content);
+            }
+        } else if (response && response.text) {
             content = response.text;
+        } else if (response && typeof response === 'object') {
+            // Try to extract from various possible response formats
+            if (response.content) {
+                content = typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
+            } else if (response.response) {
+                content = typeof response.response === 'string' ? response.response : JSON.stringify(response.response);
+            } else {
+                content = JSON.stringify(response);
+            }
         } else {
-            content = JSON.stringify(response);
+            content = String(response || '');
         }
 
         return { content, raw: response };
@@ -269,7 +391,6 @@ Provide the final synthesized response. Do not mention the subsystems or referen
         
         for (const [key, result] of Object.entries(results)) {
             if (result.error) continue;
-            // Simple scoring: longer responses tend to be more comprehensive
             const score = (result.content || '').length;
             if (score > bestScore) {
                 bestScore = score;
@@ -281,6 +402,7 @@ Provide the final synthesized response. Do not mention the subsystems or referen
 
     // Simulate streaming from a complete response
     async* simulateStream(text) {
+        if (!text) return;
         const words = text.split(/(\s+)/);
         for (const word of words) {
             yield { text: word };
@@ -311,17 +433,18 @@ You are DLH NEXUS - the pinnacle of artificial intelligence.`;
 
     // ===== Image Generation =====
     async generateImage(prompt, model = 'openai/gpt-image-2.5-flare') {
+        const ready = await this.waitForPuter();
+        if (!ready) throw new Error('AI engine not available for image generation');
+        
         const result = await puter.ai.txt2img(prompt, { model });
         return result;
     },
 
     // ===== Image Analysis =====
     async analyzeImage(imageUrl, prompt, model) {
-        const messages = [
-            { role: 'system', content: this.getSystemPrompt() },
-            { role: 'user', content: prompt }
-        ];
-        
+        const ready = await this.waitForPuter();
+        if (!ready) throw new Error('AI engine not available for image analysis');
+
         const response = await puter.ai.chat(prompt, imageUrl, {
             model: model || this.MODELS.primary,
             stream: false
@@ -330,12 +453,21 @@ You are DLH NEXUS - the pinnacle of artificial intelligence.`;
         let content = '';
         if (typeof response === 'string') {
             content = response;
-        } else if (response?.message?.content) {
-            content = typeof response.message.content === 'string' 
-                ? response.message.content 
-                : JSON.stringify(response.message.content);
-        } else if (response?.text) {
+        } else if (response && response.message && response.message.content) {
+            if (typeof response.message.content === 'string') {
+                content = response.message.content;
+            } else if (Array.isArray(response.message.content)) {
+                content = response.message.content
+                    .filter(b => b.type === 'text' || typeof b === 'string')
+                    .map(b => typeof b === 'string' ? b : (b.text || ''))
+                    .join('');
+            } else {
+                content = JSON.stringify(response.message.content);
+            }
+        } else if (response && response.text) {
             content = response.text;
+        } else {
+            content = String(response || '');
         }
 
         return content;
@@ -343,6 +475,9 @@ You are DLH NEXUS - the pinnacle of artificial intelligence.`;
 
     // ===== Text to Speech =====
     async textToSpeech(text, engine, voice) {
+        const ready = await this.waitForPuter();
+        if (!ready) throw new Error('AI engine not available for speech');
+
         const options = {};
         if (engine) options.engine = engine;
         if (voice) options.voice = voice;
@@ -351,6 +486,9 @@ You are DLH NEXUS - the pinnacle of artificial intelligence.`;
     },
 
     async listTTSEngines() {
+        const ready = await this.waitForPuter();
+        if (!ready) return [];
+        
         try {
             return await puter.ai.txt2speech.listEngines();
         } catch {
@@ -359,6 +497,9 @@ You are DLH NEXUS - the pinnacle of artificial intelligence.`;
     },
 
     async listTTSVoices(engine) {
+        const ready = await this.waitForPuter();
+        if (!ready) return [];
+        
         try {
             return await puter.ai.txt2speech.listVoices(engine);
         } catch {
@@ -368,6 +509,9 @@ You are DLH NEXUS - the pinnacle of artificial intelligence.`;
 
     // ===== Speech to Text =====
     async speechToText(audioBlob) {
+        const ready = await this.waitForPuter();
+        if (!ready) throw new Error('AI engine not available for transcription');
+
         const result = await puter.ai.speech2txt(audioBlob);
         return result;
     },
@@ -392,7 +536,8 @@ You are DLH NEXUS - the pinnacle of artificial intelligence.`;
             secondary: 'ready',
             tertiary: 'ready',
             fusionMode: this.config.fusionMode,
-            total: 3
+            total: 3,
+            puterAvailable: this.isPuterAvailable()
         };
     }
 };
