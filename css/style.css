@@ -83,6 +83,66 @@ body {
 
 .hidden { display: none !important; }
 
+/* ===== Auth Overlay ===== */
+.auth-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+}
+
+.auth-card {
+    text-align: center;
+    max-width: 400px;
+    padding: 48px 32px;
+}
+
+.auth-card svg {
+    margin-bottom: 24px;
+}
+
+.auth-card h2 {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    margin-bottom: 12px;
+}
+
+.auth-card p {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    margin-bottom: 32px;
+    line-height: 1.6;
+}
+
+.auth-btn {
+    display: inline-block;
+    padding: 14px 32px;
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-body);
+}
+
+.auth-btn:hover {
+    transform: scale(1.05);
+}
+
+.auth-note {
+    display: block;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
 /* ===== Boot Screen ===== */
 .boot-screen {
     position: fixed;
